@@ -38,10 +38,6 @@ namespace Jigsaw
 		
 			mesh.vertices = vertices.ToArray();
 			mesh.triangles = triangles.ToArray();
-		
-			mesh.RecalculateBounds();
-			mesh.RecalculateNormals();
-			mesh.RecalculateTangents();
 		}
 	
 		private static Vector2Int[] GetOutlineEdge(int[] triangles)

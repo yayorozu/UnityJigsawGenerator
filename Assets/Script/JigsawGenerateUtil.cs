@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Unity.VectorGraphics;
 
@@ -13,6 +14,9 @@ namespace Jigsaw
 		public VectorUtils.TessellationOptions Option;
 		public Material Material;
 		public float Thickness;
+		public Texture Texture;
+
+		public Vector2 Size => new Vector2(Horizontal, Vertical);
 	}
 
 	public static class JigsawGenerateUtil
@@ -102,9 +106,9 @@ namespace Jigsaw
 				{
 					ret.Add(new BezierPathSegment
 					{
-						P0 = new Vector2(begin.x, begin.y),
-						P1 = new Vector2(end.x, end.y),
-						P2 = new Vector2(begin.x, begin.y),
+						P0 = begin / param.Size,
+						P1 = end / param.Size,
+						P2 = begin / param.Size,
 					});
 
 					continue;
@@ -113,7 +117,7 @@ namespace Jigsaw
 				var border = borders.Find(b => b.Begin == begin && b.End == end);
 				if (border == null)
 				{
-					border = new Border(begin, end, GetBorder(begin, end));
+					border = new Border(begin, end, GetBorder(begin / param.Size, end / param.Size));
 					borders.Add(border);
 				}
 
@@ -141,7 +145,24 @@ namespace Jigsaw
 				meshRenderer.material = param.Material;
 				var meshFilter = obj.AddComponent<MeshFilter>();
 				VectorUtils.FillMesh(mesh, geometries, 1f);
+				
+				// uv set
+				mesh.uv = mesh.vertices.Select(v => new Vector2(v.x, v.y)).ToArray(); 
+				
+				if (param.Texture != null)
+				{
+					mesh.vertices = mesh.vertices
+						.Select(v => new Vector3(v.x * param.Texture.width, v.y * param.Texture.height, v.z))
+						.ToArray();
+				}
+
 				MeshUtil.PushMesh(mesh, param.Thickness);
+				
+				var position = new Vector2Int(Mathf.FloorToInt(i / (float)param.Horizontal), Mathf.FloorToInt(i % (float)param.Vertical));
+
+				mesh.RecalculateBounds();
+				mesh.RecalculateNormals();
+				mesh.RecalculateTangents();
 				meshFilter.mesh = mesh;
 
 				obj.transform.SetParent(param.Parent);
@@ -157,7 +178,7 @@ namespace Jigsaw
 			var segments = new List<BezierPathSegment>();
 			var isVertical = Math.Abs(begin.x - end.x) < 0.001f;
 			var reverse = UnityEngine.Random.Range(0, 2) == 0 ? 1 : -1;
-			var height = 0.08f;
+			var height = (begin - end).magnitude * 0.1f;
 			var positions = new[]
 			{
 				0f, 0.1f, 0.3f,

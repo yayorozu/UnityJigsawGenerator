@@ -9,9 +9,10 @@ namespace Jigsaw
 		private int _separateHorizontalCount = 2;
 		[SerializeField, Range(2, 5)]
 		private int _separateVerticalCount = 2;
-
 		[SerializeField]
 		private Material _material = null;
+		[SerializeField]
+		private Texture _texture = null;
 
 		private Transform[] _pieces;
 	
@@ -31,6 +32,7 @@ namespace Jigsaw
 				}, 
 				Material = _material,
 				Thickness = 0.1f,
+				Texture = _texture,
 			});
 		}
 	}

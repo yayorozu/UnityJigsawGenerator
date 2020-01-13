@@ -223,9 +223,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1979c3f8007d4c8d9fcb5d0d1044804, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _separateHorizontalCount: 3
-  _separateVerticalCount: 3
+  _separateHorizontalCount: 2
+  _separateVerticalCount: 2
   _material: {fileID: 2100000, guid: a3b04a0b5f9084dff80e27675cf3505c, type: 2}
+  _texture: {fileID: 2800000, guid: 715ff6f08ac2749678c31b2a7dc61752, type: 3}
 --- !u!4 &1176330213
 Transform:
   m_ObjectHideFlags: 0
