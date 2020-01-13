@@ -5,9 +5,9 @@ namespace Jigsaw
 {
 	public class Jigsaw : MonoBehaviour
 	{
-		[SerializeField, Range(2, 5)]
+		[SerializeField, Range(2, 10)]
 		private int _separateHorizontalCount = 2;
-		[SerializeField, Range(2, 5)]
+		[SerializeField, Range(2, 10)]
 		private int _separateVerticalCount = 2;
 		[SerializeField]
 		private Material _material = null;
