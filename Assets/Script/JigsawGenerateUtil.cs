@@ -185,10 +185,7 @@ namespace Jigsaw
 				meshFilter.mesh = mesh;
 
 				obj.transform.SetParent(param.Parent);
-				obj.transform.localPosition = new Vector3(
-					(-(0.5f / param.Horizontal * (param.Horizontal - 1)) + position.x) * param.Texture.width / param.Horizontal,
-					(-(0.5f / param.Vertical * (param.Vertical - 1)) + position.y) * param.Texture.height / param.Vertical,
-					0f);
+				obj.transform.localPosition = (-Vector3.one / param.Size * (param.Size - Vector2.one) + position) * param.TextureSize / 2f;
 				pieces[i] = obj.transform;
 			}
 		}
