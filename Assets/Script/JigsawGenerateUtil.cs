@@ -17,15 +17,17 @@ namespace Jigsaw
 		public Texture Texture;
 
 		public Vector2 Size => new Vector2(Horizontal, Vertical);
+		public Vector2 TextureSize => Texture == null ? Vector2.one : new Vector2(Texture.width, Texture.height);
+		
 	}
 
 	public static class JigsawGenerateUtil
 	{
 		private class Border
 		{
-			public Vector2Int Begin;
-			public Vector2Int End;
-			public List<BezierPathSegment> Segments;
+			public readonly Vector2Int Begin;
+			public readonly Vector2Int End;
+			public readonly List<BezierPathSegment> Segments;
 
 			public Border(Vector2Int begin, Vector2Int end, List<BezierPathSegment> segments)
 			{
@@ -36,12 +38,10 @@ namespace Jigsaw
 		}
 
 		// 反時計回り
-		private static readonly Vector2Int[] clockwisePosition =
-			{Vector2Int.zero, Vector2Int.right, Vector2Int.one, Vector2Int.up};
+		private static readonly Vector2Int[] clockwisePosition = {Vector2Int.zero, Vector2Int.right, Vector2Int.one, Vector2Int.up};
 
 		// 時計回り
-		private static readonly Vector2Int[] counterclockwisePosition =
-			{Vector2Int.zero, Vector2Int.up, Vector2Int.one, Vector2Int.right};
+		private static readonly Vector2Int[] counterclockwisePosition = {Vector2Int.zero, Vector2Int.up, Vector2Int.one, Vector2Int.right};
 
 		public static void GenerateJigsaw(JigsawParam param)
 		{
@@ -118,9 +118,10 @@ namespace Jigsaw
 				{
 					// 分割数に応じて凸凹の高さを決める
 					var height = Math.Abs(begin.x - end.x) < 0.001f
-						? 1 / (float) param.Horizontal / 2f
-						: 1 / (float) param.Vertical / 2f;
-
+						? 1 / (float) param.Horizontal * param.Horizontal / 4f
+						: 1 / (float) param.Vertical * param.Vertical / 4f;
+					
+					Debug.LogError(height);
 					border = new Border(begin, end, GetBorder(begin / param.Size, end / param.Size, height));
 					borders.Add(border);
 				}
@@ -140,9 +141,14 @@ namespace Jigsaw
 			for (var i = 0; i < shapes.Count; ++i)
 			{
 				var scene = new Scene {Root = new SceneNode {Shapes = new List<Shape> {shapes[i]}}};
+				
+				var position = new Vector2Int(
+					Mathf.FloorToInt(i / (float)param.Vertical),
+					Mathf.FloorToInt(i % (float)param.Vertical)
+				);
 
 				var mesh = new Mesh();
-				var obj = new GameObject(i.ToString());
+				var obj = new GameObject(position.ToString());
 				var geometries = VectorUtils.TessellateScene(scene, param.Option);
 
 				var meshRenderer = obj.AddComponent<MeshRenderer>();
@@ -159,30 +165,43 @@ namespace Jigsaw
 						.Select(v => new Vector3(v.x * param.Texture.width, v.y * param.Texture.height, v.z))
 						.ToArray();
 				}
+				
+				// Pivot の更新
+				// 1ピースのサイズ
+				var size = param.TextureSize / param.Size;
 
+				mesh.vertices = mesh.vertices
+					.Select(v => new Vector3(
+						v.x - size.x * position.x - size.x / 2f,
+						v.y - size.y * position.y - size.y / 2f,
+						v.z)
+					).ToArray();
+				
 				MeshUtil.PushMesh(mesh, param.Thickness);
 				
-				var position = new Vector2Int(Mathf.FloorToInt(i / (float)param.Horizontal), Mathf.FloorToInt(i % (float)param.Vertical));
-
 				mesh.RecalculateBounds();
 				mesh.RecalculateNormals();
 				mesh.RecalculateTangents();
 				meshFilter.mesh = mesh;
 
 				obj.transform.SetParent(param.Parent);
+				obj.transform.localPosition = new Vector3(
+					(-(0.5f / param.Horizontal * (param.Horizontal - 1)) + position.x) * param.Texture.width / param.Horizontal,
+					(-(0.5f / param.Vertical * (param.Vertical - 1)) + position.y) * param.Texture.height / param.Vertical,
+					0f);
 				pieces[i] = obj.transform;
 			}
 		}
-
+		
 		/// <summary>
 		/// 境界線を取得
 		/// </summary>
-		private static List<BezierPathSegment> GetBorder(Vector2 begin, Vector2 end)
+		private static List<BezierPathSegment> GetBorder(Vector2 begin, Vector2 end, float heightRatio)
 		{
 			var segments = new List<BezierPathSegment>();
 			var isVertical = Math.Abs(begin.x - end.x) < 0.001f;
 			var reverse = UnityEngine.Random.Range(0, 2) == 0 ? 1 : -1;
-			var height = (begin - end).magnitude * 0.1f;
+			var height = (begin - end).magnitude * heightRatio;
 			var positions = new[]
 			{
 				0f, 0.1f, 0.3f,
@@ -194,9 +213,9 @@ namespace Jigsaw
 			var heights = new[]
 			{
 				0f, 0f, 0f,
-				0f, height, height,
-				height * 2, height * 3, height * 3,
-				height * 2, height, height,
+				0f, height / 3f, height / 3f,
+				height / 2f, height, height,
+				height / 2f, height / 3f, height / 3f,
 				0f, 0f, 0f,
 			};
 

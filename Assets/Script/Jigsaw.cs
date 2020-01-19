@@ -31,7 +31,7 @@ namespace Jigsaw
 					SamplingStepSize = 0.1f
 				}, 
 				Material = _material,
-				Thickness = 0.1f,
+				Thickness = 10f,
 				Texture = _texture,
 			});
 		}
