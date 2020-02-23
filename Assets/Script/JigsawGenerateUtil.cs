@@ -15,49 +15,56 @@ namespace Jigsaw
 		public Material Material;
 		public float Thickness;
 		public Texture Texture;
+		// 塗りの厚み
+		public float DrawThickness = 2f;
+		public Color LineColor = Color.gray;
 
 		public Vector2 Size => new Vector2(Horizontal, Vertical);
 		public Vector2 TextureSize => Texture == null ? Vector2.one : new Vector2(Texture.width, Texture.height);
 		
 	}
+	
+	internal class Border
+	{
+		public readonly Vector2Int Begin;
+		public readonly Vector2Int End;
+		public readonly List<BezierPathSegment> Segments;
+
+		public Border(Vector2Int begin, Vector2Int end, List<BezierPathSegment> segments)
+		{
+			Begin = begin;
+			End = end;
+			Segments = segments;
+		}
+	}
 
 	public static class JigsawGenerateUtil
 	{
-		private class Border
-		{
-			public readonly Vector2Int Begin;
-			public readonly Vector2Int End;
-			public readonly List<BezierPathSegment> Segments;
-
-			public Border(Vector2Int begin, Vector2Int end, List<BezierPathSegment> segments)
-			{
-				Begin = begin;
-				End = end;
-				Segments = segments;
-			}
-		}
-
 		// 反時計回り
-		private static readonly Vector2Int[] clockwisePosition = {Vector2Int.zero, Vector2Int.right, Vector2Int.one, Vector2Int.up};
+		private static readonly Vector2Int[] CWPosition = {Vector2Int.zero, Vector2Int.right, Vector2Int.one, Vector2Int.up};
 
 		// 時計回り
-		private static readonly Vector2Int[] counterclockwisePosition = {Vector2Int.zero, Vector2Int.up, Vector2Int.one, Vector2Int.right};
+		private static readonly Vector2Int[] CCWPosition = {Vector2Int.zero, Vector2Int.up, Vector2Int.one, Vector2Int.right};
 
 		public static void GenerateJigsaw(JigsawParam param)
 		{
-			GenerateMesh(param, GeneratePieceShapes(param));
+			var shapes = new List<Shape>(param.Horizontal * param.Vertical);
+			var borders = new List<Border>(param.Horizontal * param.Vertical * 4);
+			GeneratePieceShapes(param, ref shapes, ref borders);
+			GenerateMesh(param, shapes);
+			var texture = TextureUtil.CreateTexture(param, borders);
+			if (param.Material != null)
+			{
+				param.Material.mainTexture = texture;
+			}
 		}
 
 		/// <summary>
 		/// ピース生成のためのShapeを作成
 		/// </summary>
-		/// <param name="param"></param>
 		/// <returns></returns>
-		private static List<Shape> GeneratePieceShapes(JigsawParam param)
+		private static void GeneratePieceShapes(JigsawParam param, ref List<Shape> shapes, ref List<Border> borders)
 		{
-			var shapes = new List<Shape>(param.Horizontal * param.Vertical);
-			var borders = new List<Border>();
-
 			// 境界線を作成
 			for (var x = 0; x < param.Horizontal; x++)
 			{
@@ -77,8 +84,6 @@ namespace Jigsaw
 					});
 				}
 			}
-
-			return shapes;
 		}
 
 		/// <summary>
@@ -88,7 +93,7 @@ namespace Jigsaw
 		{
 			var ret = new List<BezierPathSegment>();
 			var isClockwise = (x + y) % 2 == 0;
-			foreach (var position in isClockwise ? clockwisePosition : counterclockwisePosition)
+			foreach (var position in isClockwise ? CWPosition : CCWPosition)
 			{
 				var begin = new Vector2Int(x + position.x, y + position.y);
 				var end = isClockwise
@@ -121,7 +126,6 @@ namespace Jigsaw
 						? 1 / (float) param.Horizontal * param.Horizontal / 4f
 						: 1 / (float) param.Vertical * param.Vertical / 4f;
 					
-					Debug.LogError(height);
 					border = new Border(begin, end, GetBorder(begin / param.Size, end / param.Size, height));
 					borders.Add(border);
 				}

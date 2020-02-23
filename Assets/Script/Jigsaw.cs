@@ -13,6 +13,8 @@ namespace Jigsaw
 		private Material _material = null;
 		[SerializeField]
 		private Texture _texture = null;
+		[SerializeField]
+		private Color _lineColor = Color.gray;
 
 		private Transform[] _pieces;
 	
@@ -33,6 +35,7 @@ namespace Jigsaw
 				Material = _material,
 				Thickness = 10f,
 				Texture = _texture,
+				LineColor = _lineColor,
 			});
 		}
 	}
