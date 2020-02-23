@@ -227,6 +227,7 @@ MonoBehaviour:
   _separateVerticalCount: 2
   _material: {fileID: 2100000, guid: a3b04a0b5f9084dff80e27675cf3505c, type: 2}
   _texture: {fileID: 2800000, guid: 715ff6f08ac2749678c31b2a7dc61752, type: 3}
+  _lineColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!4 &1176330213
 Transform:
   m_ObjectHideFlags: 0
